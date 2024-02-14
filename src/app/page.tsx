@@ -8,6 +8,12 @@ export default function Home() {
   const queryClient = useQueryClient(); // É basicamente uma forma manual de refetch, para que eu cojnsiga dar  refetch apenas onde foi atualizado, evitando uma sobrecarga
   const axios = require("axios").default;
 
+  type Testing = {
+    id: string;
+    titulo?: string;
+    concluida: boolean;
+  };
+
   //Dentro do useQuery como primeiro argumento pode ser passado um array de dois elementos, um que nomeia, e outro que garante que será algo unico
   //como uma espécie de chave
   const { data, isLoading, isError, refetch } = useQuery(
@@ -30,15 +36,17 @@ export default function Home() {
   // Enquanto o useQuery serve para realizar requisições, o useMutation serve para qualquer tipo de atualização necessária
   // como um put,post,patch,delete
   const mutation = useMutation({
-    mutationFn: ({ id, concluida }) => {
+    mutationFn: ({ id, concluida }: Testing) => {
       return axios
         .patch(`http://localhost:3000/tarefas/${id}`, { concluida })
         .then((response: any) => response.data);
     },
-    onSuccess: (data) => {
+    onSuccess: (data: Testing) => {
       // refetch(); // Essa função básicamente refaz a query!
-      queryClient.setQueryData("tasks", (currentData) =>
-        currentData.map((todo) => (todo.id === data.id ? data : todo))
+      queryClient.setQueryData("tasks", (currentData: Testing[] | unknown) =>
+        (currentData as Testing[]).map((todo) =>
+          todo.id === data.id ? data : todo
+        )
       ); // O segundo parametro pode ser uma nova lista diretamente, ou uma função que retorne uma lista
     },
     onError: (error) => console.log(error),
